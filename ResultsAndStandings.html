@@ -1,1 +1,189 @@
+<!doctype html>
+<html>
+<head>
+    <title>Results And Standings | A Self-Updating Table</title>
+    <meta charset="utf-8">
+</head>
+<body>
+<!-- 
+     List of matches and results. 
+     Not all matches need to have their results entered.
+ -->
+<style>
+/* some sample styles to improve readability of the displayed page */
+.div-rnd {
+   width: 50%;
+   float: left;
+}
+.rnd {
+   margin: 5px;
+   padding: 10px 0 10px 0;
+   font-weight: bold;
+   font-size: 1.5em;
+}
+</style>
+<div class="div-rnd">
+<table id="match-results-table-id"> <!-- this element ID is used by the Javascript code -->
+<tbody>
+    <tr><td colspan="10" class="rnd">Round 1</td></tr>
+    <tr><td>Accrington</td><td> - </td><td>Wolverhampton Wanderers</td><td>4</td><td>:</td><td>4</td></tr>
+    <tr><td>Aston Villa</td><td> - </td><td>Stoke City</td><td>5</td><td>:</td><td>1</td></tr>
+    <tr><td>Blackburn Rovers</td><td> - </td><td>Notts County</td><td>5</td><td>:</td><td>2</td></tr>
+    <tr><td>Bolton Wanderers</td><td> - </td><td>West Browich Albion</td><td>1</td><td>:</td><td>2</td></tr>
+    <tr><td>Burnley</td><td> - </td><td>Everton</td><td>2</td><td>:</td><td>2</td></tr>
+    <tr><td>Derby County</td><td> - </td><td>Preston North End</td><td>2</td><td>:</td><td>3</td></tr>
+    
+    <tr><td colspan="10" class="rnd">Round 2</td></tr>
+    <tr><td>Everton</td><td> - </td><td>Blackburn Rovers</td><td>3</td><td>:</td><td>1</td></tr>
+    <tr><td>Notts County</td><td> - </td><td>Aston Villa</td><td>2</td><td>:</td><td>4</td></tr>
+    <tr><td>Preston North End</td><td> - </td><td>Accrington</td><td>2</td><td>:</td><td>0</td></tr>
+    <tr><td>Stoke City</td><td> - </td><td>Bolton Wanderers</td><td>2</td><td>:</td><td>2</td></tr>
+    <tr><td>West Browich Albion</td><td> - </td><td>Burnley</td><td>4</td><td>:</td><td>3</td></tr>
+    <tr><td>Wolverhampton Wanderers</td><td> - </td><td>Derby County</td><td>4</td><td>:</td><td>1</td></tr>
 
+    <!-- a round with no results -->
+    <tr><td colspan="10" class="rnd">Round 3</td></tr>
+    <tr><td>Accrington</td><td> - </td><td>Notts County</td><td></td><td>:</td><td></td></tr> 
+    <tr><td>Aston Villa</td><td> - </td><td>Everton</td><td></td><td>:</td><td></td></tr>   
+    <tr><td>Blackburn Rovers</td><td> - </td><td>Wolverhampton Wanderers</td><td></td><td>:</td><td></td></tr>  
+    <tr><td>Bolton Wanderers</td><td> - </td><td>Preston North End</td><td></td><td>:</td><td></td></tr>    
+    <tr><td>Burnley</td><td> - </td><td>West Browich Albion</td><td></td><td>:</td><td></td></tr>  
+    <tr><td>Derby County</td><td> - </td><td>Stoke City</td><td></td><td>:</td><td></td></tr>
+</tbody>
+</table>
+</div>
+
+
+<!-- 
+     The ladder : calculated based on the results of matches.
+ -->
+<style>
+/* some sample styles to improve readability when the page is displayed */
+.div-ladder {
+   width: 50%;
+   float: right;
+}
+.ladder-hdr {
+   margin: 5px;
+   padding: 3px 0 3px 0;
+   font-weight: bold;
+   text-align: center;
+}
+</style>
+<div class="div-ladder">
+    <table>
+        <thead class="ladder-hdr">
+            <tr>
+                <td></td><td>Team</td><td>P</td><td>W</td><td>D</td><td>L</td><td>GD</td><td>Pts</td>
+            </tr>
+        </thead>
+        <tbody id="ladder-table-id"></tbody> <!-- this element ID is used by the Javascript code -->
+    </table>
+</div>
+
+<script>
+var KEY_NAME = "TeamName";
+var KEY_P = "Played";
+var KEY_W = "Won";
+var KEY_D = "Drawn";
+var KEY_L = "Lost";
+var KEY_GF = "GoalsFor";
+var KEY_GA = "GoalsAgainst";
+var KEY_PTS = "Points";
+
+var teams = [];
+
+// adds the data for a single game of the given team and stores the result in the "teams" array
+function updateTeam(teamName, goalsFor, goalsAgainst) {
+    var team = [];
+    team[KEY_NAME] = teamName.trim();
+    team[KEY_GF]   = Number(goalsFor);
+    team[KEY_GA]   = Number(goalsAgainst);
+    team[KEY_P] = 1;
+    team[KEY_W] = 0;
+    team[KEY_D] = 0;
+    team[KEY_L] = 0;
+    switch (Math.sign(team[KEY_GF] - team[KEY_GA])) {
+    case 1 :
+        team[KEY_PTS] = 3;
+        team[KEY_W] = 1;
+        break;
+    case -1 :
+        team[KEY_PTS] = 0;
+        team[KEY_L] = 1;
+        break;        
+    default:
+        team[KEY_PTS] = 1;
+        team[KEY_D] = 1;
+    }           
+    for (var i = 0; i < teams.length; i++) {
+        var curTeam = teams[i];
+        if (curTeam[KEY_NAME].trim() == team[KEY_NAME].trim()) {    
+            curTeam[KEY_GF] = curTeam[KEY_GF] + team[KEY_GF]; 
+            curTeam[KEY_GA] = curTeam[KEY_GA] + team[KEY_GA]; 
+            curTeam[KEY_P] = curTeam[KEY_P] + team[KEY_P];
+            curTeam[KEY_W] = curTeam[KEY_W] + team[KEY_W];
+            curTeam[KEY_D] = curTeam[KEY_D] + team[KEY_D];
+            curTeam[KEY_L] = curTeam[KEY_L] + team[KEY_L];            
+            curTeam[KEY_PTS] = curTeam[KEY_PTS] + team[KEY_PTS];
+            teams[i] = curTeam;
+            return;
+        }   
+    }
+    teams.push(team);
+}
+// inserts a table cell with the given text, right-aligned by default 
+function createCell(cellText, alignment) {
+    var cell = document.createElement("td");
+    cell.appendChild(document.createTextNode(cellText));
+    if (alignment === undefined) {
+        alignment = "right";
+    }
+    cell.style.textAlign = alignment;
+    return cell;
+}
+// parse the results, calculate, sort and display the ladder
+window.onload = function(){
+    var games = document.getElementById("match-results-table-id").getElementsByTagName("tr");
+    for (var i = 0; i < games.length; i++) {
+        var game = games[i].querySelectorAll("td");
+        if (game.length > 5 && game[5].innerHTML.trim() != "") { 
+            var teamA = game[0].innerHTML;
+            var teamB = game[2].innerHTML;
+            var goalsA = game[3].innerHTML;
+            var goalsB = game[5].innerHTML;
+            updateTeam(teamA, goalsA, goalsB);    
+            updateTeam(teamB, goalsB, goalsA);    
+       }
+    }
+    // sort table by points, GD, GS
+    teams.sort(
+        function(a,b){ 
+            if (b[KEY_PTS] != a[KEY_PTS]) return b[KEY_PTS] - a[KEY_PTS];
+            var gf1 = b[KEY_GF];
+            var ga1 = b[KEY_GA];
+            var gf2 = a[KEY_GF];
+            var ga2 = a[KEY_GA];
+            if (gf1 - ga1 != gf2 - ga2) return (gf1 - ga1) - (gf2 - ga2);
+            return gf1 - gf2;
+        }
+    );
+    // display the updated ladder
+    var tblBody = document.getElementById("ladder-table-id");
+    for (var i = 0; i < teams.length; i++) {
+        var team = teams[i];
+        var row = document.createElement("tr");
+        row.appendChild(createCell(i + 1));
+        row.appendChild(createCell(team[KEY_NAME], "left"));
+        row.appendChild(createCell(team[KEY_P]));
+        row.appendChild(createCell(team[KEY_W]));
+        row.appendChild(createCell(team[KEY_D]));
+        row.appendChild(createCell(team[KEY_L]));
+        row.appendChild(createCell(team[KEY_GF] + ":" + team[KEY_GA], "center"));
+        row.appendChild(createCell(team[KEY_PTS]));
+        tblBody.appendChild(row);        
+    }
+}
+</script>
+</body>
+</html>
